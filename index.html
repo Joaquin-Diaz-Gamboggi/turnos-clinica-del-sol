@@ -1,0 +1,839 @@
+<!doctype html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<title>Turnos Clínica del Sol</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@500;600;700&family=IBM+Plex+Sans:wght@400;500;600&display=swap" rel="stylesheet">
+<style>
+  /* Mismo diseño que la maqueta original: barra lateral oscura, tablas simples y modales. Tema claro único. */
+  :root{
+    --bg:#EEF3F2;
+    --surface:#FFFFFF;
+    --primary:#1F5E5E;
+    --primary-dark:#163F3F;
+    --accent:#B14A3A;
+    --success:#3E7A55;
+    --warn:#A86A12;
+    --clinic:#5B5E8C;
+    --debt:#8A2E22;
+    --text:#16211F;
+    --text-muted:#5B6B68;
+    --border:#D7E0DD;
+    --soft:#F6F9F8;
+    color-scheme:light;
+  }
+  *{box-sizing:border-box;}
+  [hidden]{display:none!important;}
+  html,body{background:var(--bg);}
+  body{margin:0;font-family:'IBM Plex Sans',system-ui,-apple-system,sans-serif;color:var(--text);}
+  h1,h2,h3,.label{font-family:'Space Grotesk','IBM Plex Sans',system-ui,sans-serif;text-wrap:balance;}
+
+  /* LOGIN */
+  #login-screen{width:100%;display:flex;align-items:center;justify-content:center;min-height:100vh;padding:16px;
+    background:linear-gradient(180deg,var(--bg) 0%,#E2ECE9 100%);}
+  .login-card{background:var(--surface);border:1px solid var(--border);border-radius:6px;padding:40px 36px;width:100%;max-width:360px;}
+  .login-card h1{font-size:22px;margin:0 0 4px;color:var(--primary-dark);}
+  .login-card > p{font-size:13px;color:var(--text-muted);margin:0 0 24px;}
+  .login-card .note{margin:16px 0 0;font-size:12px;color:var(--text-muted);line-height:1.5;}
+  .login-error{background:#FBF1EF;color:var(--debt);border:1px solid #EBC9C2;border-radius:5px;padding:8px 10px;font-size:12.5px;margin-bottom:12px;}
+  .role-toggle{display:flex;gap:8px;margin-bottom:20px;}
+  .role-btn{flex:1;padding:10px;border:1px solid var(--border);background:var(--surface);border-radius:5px;font-family:'IBM Plex Sans',sans-serif;font-size:13px;cursor:pointer;color:var(--text-muted);}
+  .role-btn.active{background:var(--primary);color:#fff;border-color:var(--primary);}
+  .field{margin-bottom:14px;min-width:0;}
+  .field label{display:block;font-size:12px;color:var(--text-muted);margin-bottom:5px;}
+  .field input,select{width:100%;padding:9px 10px;border:1px solid var(--border);border-radius:5px;font-family:'IBM Plex Sans',sans-serif;font-size:14px;background:#FBFDFC;color:var(--text);}
+  .field .hint{font-size:11.5px;color:var(--text-muted);margin-top:4px;}
+  .btn-primary{width:100%;padding:11px;background:var(--primary);color:#fff;border:none;border-radius:5px;font-family:'Space Grotesk',sans-serif;font-weight:600;font-size:14px;cursor:pointer;margin-top:6px;}
+  .btn-primary:hover{background:var(--primary-dark);}
+  .btn-primary:disabled{opacity:.45;cursor:not-allowed;}
+
+  /* APP SHELL */
+  #app-screen{width:100%;display:flex;min-height:100vh;}
+  .sidebar{width:220px;background:var(--primary-dark);color:#fff;padding:22px 16px;flex-shrink:0;display:flex;flex-direction:column;}
+  .sidebar .brand{font-family:'Space Grotesk',sans-serif;font-weight:700;font-size:16px;margin-bottom:28px;letter-spacing:.2px;}
+  .sidebar .brand span{color:#8FC4B8;}
+  .nav-item{padding:9px 10px;border-radius:5px;font-size:13.5px;margin-bottom:3px;cursor:pointer;color:#CFE3DE;display:flex;justify-content:space-between;align-items:center;gap:8px;background:none;border:none;width:100%;text-align:left;font-family:inherit;}
+  .nav-item:hover{background:rgba(255,255,255,.08);}
+  .nav-item.active{background:rgba(255,255,255,.14);color:#fff;font-weight:500;}
+  .badge{background:var(--accent);color:#fff;font-size:11px;border-radius:10px;padding:1px 7px;font-weight:600;}
+  .sidebar .who{margin-top:30px;padding-top:16px;border-top:1px solid rgba(255,255,255,.15);font-size:12px;color:#9DC2B9;}
+  .sidebar .who b{color:#fff;display:block;font-size:13px;margin-bottom:2px;}
+  .logout{margin-top:10px;font-size:12px;color:#8FC4B8;cursor:pointer;text-decoration:underline;background:none;border:none;padding:0;font-family:inherit;}
+  .clock{margin-top:auto;padding-top:22px;}
+  .clock-box{background:rgba(255,255,255,.07);border:1px solid rgba(255,255,255,.14);border-radius:6px;padding:12px;}
+  .clock-box .k{font-size:10.5px;letter-spacing:.6px;text-transform:uppercase;color:#9DC2B9;}
+  .clock-box .v{font-family:'Space Grotesk',sans-serif;font-size:14px;color:#fff;margin:4px 0 10px;font-variant-numeric:tabular-nums;}
+  .clock-box button{display:block;width:100%;margin-top:5px;background:transparent;color:#CFE3DE;border:1px solid rgba(255,255,255,.22);border-radius:4px;padding:6px 8px;font-size:12px;cursor:pointer;text-align:left;font-family:inherit;}
+  .clock-box button:hover{background:rgba(255,255,255,.08);color:#fff;}
+
+  .main{flex:1;padding:26px 34px;overflow:auto;min-width:0;}
+  .topbar{display:flex;justify-content:space-between;align-items:center;margin-bottom:18px;gap:12px;flex-wrap:wrap;}
+  .topbar h2{margin:0;font-size:20px;}
+  .topbar .sub{font-size:13px;color:var(--text-muted);margin-top:3px;}
+  .btn-new{background:var(--primary);color:#fff;border:none;padding:9px 16px;border-radius:5px;font-family:'IBM Plex Sans',sans-serif;font-weight:500;font-size:13.5px;cursor:pointer;}
+  .btn-new:hover{background:var(--primary-dark);}
+  .btn-ghost{background:var(--surface);border:1px solid var(--border);padding:8px 12px;border-radius:5px;cursor:pointer;font-size:13px;color:var(--text-muted);font-family:inherit;}
+  .btn-ghost:hover{color:var(--text);border-color:#B9C8C4;}
+  .btn-ghost:disabled{opacity:.45;cursor:not-allowed;}
+  .toolbar{display:flex;gap:8px;align-items:center;flex-wrap:wrap;margin-bottom:14px;}
+  .toolbar input[type=date],.toolbar select,.toolbar input[type=search]{width:auto;padding:7px 9px;font-size:13px;border:1px solid var(--border);border-radius:5px;background:var(--surface);font-family:inherit;}
+  .info-strip{background:var(--surface);border:1px solid var(--border);border-radius:6px;padding:10px 14px;font-size:12.5px;color:var(--text-muted);margin-bottom:14px;line-height:1.5;}
+  .info-strip b{color:var(--text);font-weight:600;}
+
+  /* AGENDA GRID */
+  .agenda-wrap{background:var(--surface);border:1px solid var(--border);border-radius:6px;overflow-x:auto;}
+  .agenda-grid{display:grid;min-width:620px;}
+  .agenda-grid .cell{border-bottom:1px solid var(--border);border-right:1px solid var(--border);padding:8px 10px;min-height:56px;display:flex;flex-direction:column;gap:6px;}
+  .agenda-grid .head{background:var(--soft);font-size:12.5px;font-weight:600;color:var(--primary-dark);padding:10px;min-height:0;}
+  .agenda-grid .head small{display:block;font-weight:400;color:var(--text-muted);}
+  .agenda-grid .time{font-size:12px;color:var(--text-muted);background:#F9FBFA;font-variant-numeric:tabular-nums;}
+  .free{font-size:11.5px;color:var(--text-muted);}
+  .free-btn{align-self:flex-start;font-size:11.5px;color:var(--primary);background:none;border:1px dashed #A9C4BE;border-radius:4px;padding:4px 8px;cursor:pointer;font-family:inherit;}
+  .free-btn:hover{background:#EEF5F3;}
+  .closed{padding:28px;text-align:center;color:var(--text-muted);font-size:13.5px;}
+
+  .turno{border-radius:3px;padding:6px 8px;font-size:12px;background:#F2F7F5;border-left:3px solid var(--border);cursor:pointer;text-align:left;border-top:none;border-right:none;border-bottom:none;font-family:inherit;color:var(--text);width:100%;}
+  .turno .p-name{font-weight:600;display:block;font-size:12.5px;}
+  .turno .p-meta{color:var(--text-muted);font-size:11px;display:block;}
+  .e-sin{border-left-color:var(--warn)!important;background:#FBF6EC!important;}
+  .e-asig{border-left-color:var(--primary)!important;background:#EDF5F3!important;}
+  .e-pres{border-left-color:var(--success)!important;background:#F1F7F3!important;}
+  .e-aus{border-left-color:var(--accent)!important;background:#FBF1EF!important;}
+  .e-cansin,.e-sald,.e-cancli,.e-cancon{opacity:.82;}
+  .e-cansin{border-left-color:var(--text-muted)!important;background:#F4F4F3!important;}
+  .e-cancon{border-left-color:var(--debt)!important;background:#F8ECE9!important;}
+  .e-sald{border-left-color:#7C9A88!important;background:#F2F5F3!important;}
+  .e-cancli{border-left-color:var(--clinic)!important;background:#F1F1F7!important;}
+  .turno.e-cansin .p-name,.turno.e-cancon .p-name,.turno.e-sald .p-name,.turno.e-cancli .p-name{text-decoration:line-through;}
+  .legend{display:flex;gap:8px 16px;margin-top:14px;font-size:12px;color:var(--text-muted);flex-wrap:wrap;}
+  .legend span{display:inline-flex;align-items:center;gap:5px;}
+  .dot{width:9px;height:9px;border-radius:2px;display:inline-block;}
+
+  /* TABLES */
+  .tbl{overflow-x:auto;border:1px solid var(--border);border-radius:6px;background:var(--surface);margin-bottom:18px;}
+  table{width:100%;border-collapse:collapse;min-width:620px;}
+  th,td{padding:10px 14px;text-align:left;font-size:13.5px;border-bottom:1px solid var(--border);vertical-align:middle;}
+  td{font-variant-numeric:tabular-nums;}
+  th{background:var(--soft);color:var(--primary-dark);font-family:'Space Grotesk',sans-serif;font-weight:600;font-size:12.5px;}
+  tr:last-child td{border-bottom:none;}
+  tr.inactive td{color:var(--text-muted);}
+  .empty-row td{color:var(--text-muted);text-align:center;padding:22px;}
+  .tag{font-size:11px;padding:3px 8px;border-radius:3px;background:#EAF2EF;color:var(--primary-dark);white-space:nowrap;display:inline-block;border-left:3px solid transparent;}
+  .tag.gray{background:#EEEFEE;color:var(--text-muted);}
+  .row-actions{white-space:nowrap;}
+  .row-actions button,.link{font-size:12.5px;color:var(--primary);margin-right:12px;cursor:pointer;background:none;border:none;padding:0;font-family:inherit;}
+  .row-actions button.danger{color:var(--accent);}
+  .row-actions button:hover,.link:hover{text-decoration:underline;}
+  .muted{color:var(--text-muted);font-size:12px;}
+  h3.section{font-size:15px;margin:6px 0 4px;}
+  p.section-sub{font-size:12.5px;color:var(--text-muted);margin:0 0 10px;}
+  .pager{display:flex;justify-content:space-between;align-items:center;gap:10px;font-size:12.5px;color:var(--text-muted);margin-top:-6px;flex-wrap:wrap;}
+  .pager div{display:flex;gap:6px;}
+
+  /* MODAL */
+  .overlay{position:fixed;inset:0;background:rgba(22,33,31,.45);display:flex;align-items:center;justify-content:center;z-index:50;padding:16px;}
+  .modal{background:var(--surface);width:520px;max-width:100%;border-radius:7px;padding:26px 28px;border-top:4px solid var(--primary);max-height:92vh;overflow:auto;}
+  .modal h3{margin:0 0 4px;font-size:17px;}
+  .modal .sub{font-size:12.5px;color:var(--text-muted);margin-bottom:18px;line-height:1.5;}
+  .grid2{display:grid;grid-template-columns:1fr 1fr;gap:0 12px;}
+  .modal-actions{display:flex;justify-content:flex-end;gap:10px;margin-top:18px;flex-wrap:wrap;}
+  .modal-actions .btn-primary{width:auto;margin-top:0;padding:9px 16px;}
+  .btn-danger{background:var(--accent);color:#fff;border:none;padding:9px 16px;border-radius:5px;cursor:pointer;font-family:'Space Grotesk',sans-serif;font-weight:600;font-size:14px;}
+  .kv{display:grid;grid-template-columns:150px 1fr;gap:8px 12px;font-size:13.5px;margin-bottom:16px;}
+  .kv dt{color:var(--text-muted);font-size:12.5px;}
+  .kv dd{margin:0;}
+  .alert{border-radius:5px;padding:9px 11px;font-size:12.5px;line-height:1.5;margin-bottom:12px;}
+  .alert.warn{background:#FBF6EC;border:1px solid #EAD7B0;color:#6E4708;}
+  .alert.err{background:#FBF1EF;border:1px solid #EBC9C2;color:var(--debt);}
+  .alert.ok{background:#EDF5F3;border:1px solid #C6DDD7;color:var(--primary-dark);}
+  .actions-list{display:flex;flex-direction:column;gap:8px;}
+  .action-row{display:flex;justify-content:space-between;align-items:center;gap:12px;border:1px solid var(--border);border-radius:5px;padding:9px 11px;}
+  .action-row .t{font-size:13px;font-weight:500;}
+  .action-row .d{font-size:11.5px;color:var(--text-muted);}
+  .action-row button{flex-shrink:0;}
+  .history-list{display:flex;flex-direction:column;gap:6px;}
+
+  .estado-btn{font-size:12px;padding:6px 10px;border-radius:4px;border:1px solid var(--success);color:var(--success);background:#fff;cursor:pointer;font-family:inherit;}
+  .estado-btn:hover{background:#F1F7F3;}
+
+  /* TOAST */
+  #toasts{position:fixed;right:calc(16px + env(safe-area-inset-right,0px));bottom:calc(16px + env(safe-area-inset-bottom,0px));display:flex;flex-direction:column;gap:8px;z-index:60;max-width:min(380px,calc(100vw - 32px));}
+  .toast{background:var(--primary-dark);color:#fff;padding:11px 14px;border-radius:6px;font-size:13px;line-height:1.45;box-shadow:0 4px 14px rgba(22,33,31,.18);}
+  .toast.err{background:var(--debt);}
+
+  button:focus-visible,input:focus-visible,select:focus-visible,.nav-item:focus-visible{outline:2px solid var(--primary);outline-offset:2px;}
+  @media (max-width:760px){
+    #app-screen{flex-direction:column;}
+    .sidebar{width:auto;padding:14px max(16px,env(safe-area-inset-right,0px)) 14px max(16px,env(safe-area-inset-left,0px));}
+    .sidebar .brand{margin-bottom:10px;}
+    .nav-group{display:flex;flex-wrap:wrap;gap:4px;}
+    .nav-item{width:auto;margin-bottom:0;}
+    .sidebar .who{margin-top:12px;padding-top:10px;}
+    .clock{padding-top:12px;}
+    .main{padding:20px max(16px,env(safe-area-inset-right,0px)) 20px max(16px,env(safe-area-inset-left,0px));}
+    .grid2{grid-template-columns:1fr;}
+    .kv{grid-template-columns:1fr;gap:2px;}
+    .kv dd{margin-bottom:8px;}
+    .modal{padding:22px 18px;}
+    .action-row{flex-direction:column;align-items:flex-start;}
+  }
+  @media (prefers-reduced-motion:reduce){*{transition:none!important;animation:none!important;}}
+</style>
+</head>
+<body>
+
+
+<!-- LOGIN -->
+<div id="login-screen">
+  <div class="login-card">
+    <h1>Turnos<span style="color:var(--primary)">.</span></h1>
+    <p>Gestión de turnos · Clínica del Sol</p>
+    <div class="role-toggle">
+      <button class="role-btn active" id="rb-secretaria" onclick="setRole('secretaria')">Secretaria/o</button>
+      <button class="role-btn" id="rb-medico" onclick="setRole('medico')">Médico</button>
+    </div>
+    <div id="login-error" class="login-error" hidden></div>
+    <div class="field"><label for="login-user">Usuario</label><input id="login-user" type="text" value="mgarcia" autocomplete="off"></div>
+    <div class="field"><label for="login-pass">Contraseña</label><input id="login-pass" type="password" value="demo1234"></div>
+    <button class="btn-primary" onclick="login()">Ingresar</button>
+    <p class="note">Prototipo navegable con datos de ejemplo, sin base de datos: los cambios se pierden al recargar. Médicos de prueba: <b>cfernandez</b>, <b>nrossi</b> y <b>vnunez</b>.</p>
+  </div>
+</div>
+
+<!-- APP -->
+<div id="app-screen" hidden>
+  <nav class="sidebar">
+    <div class="brand">Turnos<span>.</span></div>
+    <div id="nav" class="nav-group"></div>
+    <div class="who">
+      <b id="who-name"></b>
+      <span id="who-role"></span>
+      <div><button class="logout" onclick="logout()">Cerrar sesión</button></div>
+    </div>
+    <div class="clock">
+      <div class="clock-box">
+        <div class="k">Fecha y hora simulada</div>
+        <div class="v" id="clock-value"></div>
+        <button onclick="advanceClock('hour')">Avanzar 1 hora</button>
+        <button onclick="advanceClock('day')">Ir al siguiente día hábil (08:00)</button>
+        <button onclick="resetDemo()">Reiniciar ejemplo</button>
+      </div>
+    </div>
+  </nav>
+  <main class="main" id="main"></main>
+</div>
+
+<div id="overlay" class="overlay" hidden onclick="if(event.target===this)closeModal()"><div class="modal" id="modal" role="dialog" aria-modal="true"></div></div>
+<div id="toasts" aria-live="polite"></div>
+
+<script>
+/* ================= Utilidades de fecha ================= */
+const DIAS = ['domingo','lunes','martes','miércoles','jueves','viernes','sábado'];
+const pad = n => String(n).padStart(2,'0');
+const ymd = d => `${d.getFullYear()}-${pad(d.getMonth()+1)}-${pad(d.getDate())}`;
+const parseYmd = s => { const [y,m,d] = s.split('-').map(Number); return new Date(y,m-1,d); };
+const startOfDay = d => new Date(d.getFullYear(), d.getMonth(), d.getDate());
+const isHabil = d => d.getDay() >= 1 && d.getDay() <= 5;
+function addHabiles(date, n){
+  const d = startOfDay(date); const step = n > 0 ? 1 : -1; let c = Math.abs(n);
+  while (c > 0){ d.setDate(d.getDate() + step); if (isHabil(d)) c--; }
+  return d;
+}
+const fDate = d => `${pad(d.getDate())}/${pad(d.getMonth()+1)}/${d.getFullYear()}`;
+const fDay = d => `${DIAS[d.getDay()]} ${fDate(d)}`;
+const fDayCap = d => { const s = fDay(d); return s[0].toUpperCase() + s.slice(1); };
+const fTime = d => `${pad(d.getHours())}:${pad(d.getMinutes())}`;
+const fHora = h => `${pad(h)}:00 a ${pad(h+1)}:00`;
+const HORAS = [8,9,10,11,12,13,14,15];
+const esc = s => String(s ?? '').replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+
+/* ================= Estados ================= */
+const E = {
+  SIN:   {label:'Reserva sin cobro',       cls:'e-sin',    color:'var(--warn)'},
+  ASIG:  {label:'Reserva asignada',        cls:'e-asig',   color:'var(--primary)'},
+  CANSIN:{label:'Cancelación sin cobro',   cls:'e-cansin', color:'var(--text-muted)'},
+  CANCON:{label:'Cancelación con cobro',   cls:'e-cancon', color:'var(--debt)'},
+  SALD:  {label:'Turno saldado',           cls:'e-sald',   color:'#7C9A88'},
+  CANCLI:{label:'Cancelación por clínica', cls:'e-cancli', color:'var(--clinic)'},
+  PRES:  {label:'Paciente presente',       cls:'e-pres',   color:'var(--success)'},
+  AUS:   {label:'Paciente ausente',        cls:'e-aus',    color:'var(--accent)'},
+};
+const tag = k => `<span class="tag ${E[k].cls}">${E[k].label}</span>`;
+const esActivo = t => t.estado === 'SIN' || t.estado === 'ASIG';
+
+/* Reglas de plazos (sección 5.2 del documento) */
+const inicio = t => { const d = parseYmd(t.fecha); d.setHours(t.hora,0,0,0); return d; };
+const fin = t => { const d = inicio(t); d.setHours(t.hora+1); return d; };
+const fechaLimite = t => { const d = addHabiles(parseYmd(t.fecha), -2); d.setHours(16,0,0,0); return d; };
+const diaSinCancelacion = t => addHabiles(parseYmd(t.fecha), -1);
+const primeraReservable = () => addHabiles(state.now, 2);
+
+/* ================= Datos de ejemplo ================= */
+function seed(){
+  return {
+    now: new Date(2026,10,5,9,30),
+    medicos: [
+      {id:'m1', nombre:'Dra. Carla Fernández', especialidad:'Clínica médica', telefono:'3462-401122', dni:'25.334.112', usuario:'cfernandez', activo:true},
+      {id:'m2', nombre:'Dr. Nicolás Rossi',    especialidad:'Pediatría',      telefono:'3462-402233', dni:'27.889.045', usuario:'nrossi',     activo:true},
+      {id:'m3', nombre:'Dra. Valeria Núñez',   especialidad:'Traumatología',  telefono:'3462-403344', dni:'29.110.876', usuario:'vnunez',     activo:true},
+    ],
+    pacientes: [
+      {id:'p1', nombre:'Juan',      apellido:'Pérez',   dni:'32.145.778', telefono:'3462-455112', obraSocial:'OSDE',          mail:'juanperez@gmail.com', activo:true},
+      {id:'p2', nombre:'Laura',     apellido:'Sosa',    dni:'28.990.221', telefono:'3462-330987', obraSocial:'PAMI',          mail:'',                    activo:true},
+      {id:'p3', nombre:'Rocío',     apellido:'Fleitas', dni:'40.221.556', telefono:'3462-778213', obraSocial:'Swiss Medical', mail:'rfleitas@gmail.com',  activo:true},
+      {id:'p4', nombre:'María',     apellido:'Gómez',   dni:'30.456.789', telefono:'3462-512340', obraSocial:'IAPOS',         mail:'mgomez@gmail.com',    activo:true},
+      {id:'p5', nombre:'Marcos',    apellido:'Ruiz',    dni:'35.667.120', telefono:'3462-620981', obraSocial:'OSDE',          mail:'',                    activo:true},
+      {id:'p6', nombre:'Sofía',     apellido:'Ibarra',  dni:'38.902.334', telefono:'3462-447765', obraSocial:'Galeno',        mail:'sofi.ibarra@gmail.com', activo:true},
+      {id:'p7', nombre:'Tomás',     apellido:'Díaz',    dni:'41.338.902', telefono:'3462-559014', obraSocial:'Particular',    mail:'',                    activo:true},
+      {id:'p8', nombre:'Ana Belén', apellido:'Ríos',    dni:'33.781.450', telefono:'3462-698123', obraSocial:'Sancor Salud',  mail:'anabelen.rios@gmail.com', activo:true},
+      {id:'p9', nombre:'Héctor',    apellido:'Molina',  dni:'20.114.553', telefono:'3462-301876', obraSocial:'PAMI',          mail:'',                    activo:false},
+    ],
+    turnos: [
+      // Pasados
+      ['m1','p2','', '2026-11-02',10,'PRES'],
+      ['m2','p5','', '2026-11-03', 9,'CANCON'],
+      ['m3','p7','', '2026-11-03',11,'SALD'],
+      ['m1','p8','', '2026-11-04', 8,'AUS'],
+      ['m3','p6','', '2026-11-04',14,'PRES'],
+      ['m3','p9','', '2026-10-30',10,'PRES'],
+      // Hoy, jueves 05/11
+      ['m1','p6','', '2026-11-05', 8,'PRES'],
+      ['m1','p1','', '2026-11-05', 9,'ASIG'],
+      ['m1','p7','', '2026-11-05',15,'ASIG'],
+      ['m2','p4','Pedro Gómez','2026-11-05', 8,'AUS'],
+      ['m2','p3','', '2026-11-05',10,'ASIG'],
+      ['m3','p8','', '2026-11-05', 9,'CANCLI'],
+      ['m3','p2','', '2026-11-05',11,'ASIG'],
+      // Viernes 06/11 (hoy es su día sin cancelación)
+      ['m1','p2','', '2026-11-06', 8,'ASIG'],
+      ['m2','p5','', '2026-11-06',10,'CANCON'],
+      ['m2','p4','Lucía Gómez','2026-11-06', 9,'CANSIN'],
+      ['m3','p3','', '2026-11-06',13,'ASIG'],
+      // Lunes 09/11 (fecha límite: hoy 16:00)
+      ['m1','p8','', '2026-11-09', 9,'SIN'],
+      ['m2','p4','Pedro Gómez','2026-11-09',10,'SIN'],
+      ['m3','p6','', '2026-11-09',11,'ASIG'],
+      ['m1','p3','', '2026-11-09',14,'ASIG'],
+      // Martes 10/11 (fecha límite: viernes 06/11 16:00)
+      ['m1','p1','', '2026-11-10', 9,'SIN'],
+      ['m2','p7','', '2026-11-10',12,'SIN'],
+      ['m3','p5','', '2026-11-10',10,'CANSIN'],
+      // Más adelante
+      ['m3','p2','', '2026-11-11', 8,'ASIG'],
+      ['m2','p6','', '2026-11-11',15,'SIN'],
+      ['m1','p4','', '2026-11-12',10,'SIN'],
+    ].map((r,i) => ({id:'t'+(i+1), medico:r[0], paciente:r[1], persona:r[2], fecha:r[3], hora:r[4], estado:r[5]})),
+  };
+}
+
+let state = seed();
+let session = {role:'secretaria', medicoId:null, view:'agenda'};
+let ui = {agendaDate:'2026-11-05', pacQuery:'', med:{orden:'cercania', dia:'', page:1}};
+let seq = 100;
+let draft = null; // borrador del formulario de turno
+
+const med = id => state.medicos.find(m => m.id === id);
+const pac = id => state.pacientes.find(p => p.id === id);
+const pacName = p => `${p.nombre} ${p.apellido}`;
+
+/* Procesos automáticos: Cancelación con cobro y Paciente ausente */
+function runAuto(){
+  let cc = 0, aus = 0;
+  for (const t of state.turnos){
+    if (t.estado === 'SIN' && state.now >= diaSinCancelacion(t)) { t.estado = 'CANCON'; cc++; }
+    else if (t.estado === 'ASIG' && state.now >= fin(t)) { t.estado = 'AUS'; aus++; }
+  }
+  return {cc, aus};
+}
+
+/* ================= Login / navegación ================= */
+function setRole(role){
+  session.role = role;
+  document.getElementById('rb-secretaria').classList.toggle('active', role==='secretaria');
+  document.getElementById('rb-medico').classList.toggle('active', role==='medico');
+  document.getElementById('login-user').value = role === 'secretaria' ? 'mgarcia' : 'cfernandez';
+  document.getElementById('login-error').hidden = true;
+}
+function login(){
+  const err = document.getElementById('login-error');
+  const user = document.getElementById('login-user').value.trim().toLowerCase();
+  if (session.role === 'medico'){
+    const m = state.medicos.find(x => x.usuario === user);
+    if (!m){ err.textContent = 'No existe un médico con ese usuario. Probá con cfernandez, nrossi o vnunez.'; err.hidden = false; return; }
+    if (!m.activo){ err.textContent = 'La cuenta de este médico está desactivada porque fue dado de baja.'; err.hidden = false; return; }
+    session.medicoId = m.id; session.view = 'mi-agenda'; ui.med = {orden:'cercania', dia:'', page:1};
+  } else {
+    if (!user){ err.textContent = 'Ingresá un usuario.'; err.hidden = false; return; }
+    session.view = 'agenda';
+  }
+  err.hidden = true;
+  document.getElementById('login-screen').hidden = true;
+  document.getElementById('login-screen').style.display = 'none';
+  document.getElementById('app-screen').hidden = false;
+  render();
+}
+function logout(){
+  document.getElementById('app-screen').hidden = true;
+  document.getElementById('login-screen').hidden = false;
+  document.getElementById('login-screen').style.display = '';
+  closeModal();
+}
+function go(view){ session.view = view; render(); }
+
+function renderNav(){
+  const nav = document.getElementById('nav');
+  if (session.role === 'medico'){
+    nav.innerHTML = `<button class="nav-item active">Mi agenda</button>`;
+    const m = med(session.medicoId);
+    document.getElementById('who-name').textContent = m.nombre;
+    document.getElementById('who-role').textContent = 'Médico · ' + m.especialidad;
+  } else {
+    const pend = state.turnos.filter(t => t.estado === 'CANCON').length + state.turnos.filter(t => t.estado === 'SIN').length;
+    const items = [['agenda','Agenda'],['cobros','Cobros pendientes'],['pacientes','Pacientes'],['medicos','Médicos']];
+    nav.innerHTML = items.map(([v,l]) => `<button class="nav-item ${session.view===v?'active':''}" onclick="go('${v}')"><span>${l}</span>${v==='cobros' && pend ? `<span class="badge">${pend}</span>`:''}</button>`).join('');
+    document.getElementById('who-name').textContent = 'María García';
+    document.getElementById('who-role').textContent = 'Secretaria';
+  }
+  document.getElementById('clock-value').textContent = `${fDayCap(state.now)} · ${fTime(state.now)}`;
+}
+
+function render(){
+  renderNav();
+  const main = document.getElementById('main');
+  const views = {agenda:viewAgenda, cobros:viewCobros, pacientes:viewPacientes, medicos:viewMedicos, 'mi-agenda':viewMiAgenda};
+  main.innerHTML = views[session.view]();
+}
+
+/* ================= Reloj simulado ================= */
+function advanceClock(kind){
+  const n = new Date(state.now);
+  if (kind === 'hour') n.setHours(n.getHours()+1);
+  else { const d = addHabiles(n, 1); d.setHours(8,0,0,0); n.setTime(d.getTime()); }
+  state.now = n;
+  const r = runAuto();
+  render();
+  const parts = [];
+  if (r.cc) parts.push(`${r.cc} turno${r.cc>1?'s':''} ${r.cc>1?'pasaron':'pasó'} a Cancelación con cobro`);
+  if (r.aus) parts.push(`${r.aus} turno${r.aus>1?'s':''} ${r.aus>1?'pasaron':'pasó'} a Paciente ausente`);
+  toast(`Ahora: ${fDay(n)}, ${fTime(n)}.` + (parts.length ? ' Cambios automáticos: ' + parts.join(' y ') + '.' : ''));
+}
+function resetDemo(){
+  state = seed(); ui.agendaDate = '2026-11-05'; ui.med.page = 1;
+  if (session.role === 'medico' && !med(session.medicoId).activo) { logout(); return; }
+  render(); toast('Se restauraron los datos de ejemplo y la fecha del jueves 05/11/2026, 09:30.');
+}
+
+/* ================= Vista: Agenda (secretaria) ================= */
+function viewAgenda(){
+  const day = parseYmd(ui.agendaDate);
+  const today = ymd(state.now) === ui.agendaDate;
+  const minRes = primeraReservable();
+  const reservable = isHabil(day) && day >= minRes;
+  const cols = state.medicos.filter(m => m.activo || state.turnos.some(t => t.medico === m.id && t.fecha === ui.agendaDate));
+  let grid = '';
+  if (!isHabil(day)){
+    grid = `<div class="closed">La clínica no atiende sábados ni domingos.</div>`;
+  } else {
+    grid = `<div class="agenda-grid" style="grid-template-columns:76px repeat(${cols.length},minmax(170px,1fr))"><div class="cell head"></div>` +
+      cols.map(m => `<div class="cell head">${esc(m.nombre)}<small>${esc(m.especialidad)}${m.activo?'':' · dado de baja'}</small></div>`).join('');
+    for (const h of HORAS){
+      grid += `<div class="cell time">${pad(h)}:00</div>`;
+      for (const m of cols){
+        const ts = state.turnos.filter(t => t.medico === m.id && t.fecha === ui.agendaDate && t.hora === h)
+          .sort((a,b) => esActivo(b) - esActivo(a));
+        let html = ts.map(turnoCard).join('');
+        if (!ts.some(esActivo) && m.activo){
+          html += reservable ? `<button class="free-btn" onclick="openTurnoForm(null,{medico:'${m.id}',fecha:'${ui.agendaDate}',hora:${h}})">+ Libre · reservar</button>` : (ts.length ? '' : `<span class="free">Libre</span>`);
+        }
+        grid += `<div class="cell">${html}</div>`;
+      }
+    }
+    grid += `</div>`;
+  }
+  const strip = reservable
+    ? `Este día admite reservas. Las reservas nuevas para esta fecha deben pagarse hasta el <b>${fDay(addHabiles(day,-2))} a las 16:00</b>.`
+    : isHabil(day) ? `Este día ya no admite reservas nuevas. El primer día reservable hoy es el <b>${fDay(minRes)}</b> (2° día hábil posterior a la fecha actual).` : `Primer día reservable: <b>${fDay(minRes)}</b>.`;
+  return `
+    <div class="topbar">
+      <div><h2>Agenda</h2><div class="sub">${fDayCap(day)}${today?' · Hoy':''}</div></div>
+      <button class="btn-new" onclick="openTurnoForm()">+ Nuevo turno</button>
+    </div>
+    <div class="toolbar">
+      <button class="btn-ghost" onclick="shiftDay(-1)">‹ Día anterior</button>
+      <button class="btn-ghost" onclick="ui.agendaDate=ymd(state.now);render()">Hoy</button>
+      <button class="btn-ghost" onclick="shiftDay(1)">Día siguiente ›</button>
+      <input type="date" id="agenda-date" value="${ui.agendaDate}" onchange="if(this.value){ui.agendaDate=this.value;render()}" aria-label="Elegir fecha">
+    </div>
+    <div class="info-strip">${strip}</div>
+    <div class="agenda-wrap">${grid}</div>
+    <div class="legend">${Object.values(E).map(e => `<span><span class="dot" style="background:${e.color}"></span>${e.label}</span>`).join('')}</div>`;
+}
+function shiftDay(n){ ui.agendaDate = ymd(addHabiles(parseYmd(ui.agendaDate), n)); render(); }
+function turnoCard(t){
+  const p = pac(t.paciente);
+  return `<button class="turno ${E[t.estado].cls}" onclick="openDetalle('${t.id}')"><span class="p-name">${esc(pacName(p))}</span><span class="p-meta">${E[t.estado].label}${t.persona?' · Se atiende: '+esc(t.persona):''}</span></button>`;
+}
+
+/* ================= Detalle de turno y acciones ================= */
+function openDetalle(id){
+  const t = state.turnos.find(x => x.id === id); if (!t) return;
+  const p = pac(t.paciente), m = med(t.medico);
+  const lim = fechaLimite(t), dsc = diaSinCancelacion(t);
+  const now = state.now;
+  const enPlazo = now < lim;
+  const acts = [];
+  if (t.estado === 'SIN'){
+    if (enPlazo){
+      acts.push(['Registrar pago','El turno pasa a Reserva asignada y queda inmutable.',`doAccion('${id}','pago')`,'btn-primary']);
+      acts.push(['Editar turno','Cambiar médico, fecha, horario, paciente o persona que se atiende.',`openTurnoForm('${id}')`,'btn-ghost']);
+      acts.push(['Cancelar sin cobro','El paciente avisó a tiempo. No debe pagar.',`confirmAccion('${id}','cansin')`,'btn-ghost']);
+    }
+  }
+  if (esActivo(t) && now < inicio(t)) acts.push(['Cancelar por clínica','Ausencia del médico, feriado u otra causa de la clínica.',`confirmAccion('${id}','cancli')`,'btn-ghost']);
+  if (t.estado === 'CANCON') acts.push(['Registrar saldo','El paciente abonó la deuda del turno.',`doAccion('${id}','saldo')`,'btn-primary']);
+
+  let aviso = '';
+  if (t.estado === 'SIN' && !enPlazo) aviso = `<div class="alert warn">El plazo para pagar o cancelar sin cobro venció el ${fDay(lim)} a las 16:00. El ${fDay(dsc)} a las 00:00 pasará automáticamente a Cancelación con cobro.</div>`;
+  else if (t.estado === 'SIN' && ymd(lim) === ymd(now)) aviso = `<div class="alert warn">La fecha límite es hoy a las 16:00.</div>`;
+  if (t.estado === 'ASIG') aviso = `<div class="alert ok">Turno pagado e inmutable. Solo admite Cancelación por clínica hasta las ${pad(t.hora)}:00 del día del turno. La asistencia la registra el médico.</div>`;
+
+  showModal(`
+    <h3>Turno · ${fDayCap(parseYmd(t.fecha))}</h3>
+    <div class="sub">${fHora(t.hora)} · ${esc(m.nombre)}</div>
+    ${aviso}
+    <dl class="kv">
+      <dt>Estado</dt><dd>${tag(t.estado)}</dd>
+      <dt>Paciente</dt><dd>${esc(pacName(p))}<br><span class="muted">Tel. ${esc(p.telefono)} · ${esc(p.obraSocial)}</span></dd>
+      <dt>Se atiende</dt><dd>${t.persona ? esc(t.persona) : '<span class="muted">El mismo paciente</span>'}</dd>
+      <dt>Médico</dt><dd>${esc(m.nombre)} <span class="muted">· ${esc(m.especialidad)}</span></dd>
+      <dt>Fecha límite</dt><dd>${fDay(lim)}, 16:00</dd>
+      <dt>Día sin cancelación</dt><dd>${fDay(dsc)}</dd>
+    </dl>
+    <div class="actions-list">
+      ${acts.length ? acts.map(a => `<div class="action-row"><div><div class="t">${a[0]}</div><div class="d">${a[1]}</div></div><button class="${a[3]}" style="width:auto;margin:0;padding:8px 14px;font-size:13px" onclick="${a[2]}">${a[0]}</button></div>`).join('')
+        : `<div class="muted">${['CANSIN','SALD','CANCLI','PRES','AUS'].includes(t.estado) ? 'Estado final: el turno no admite más cambios.' : 'No hay acciones disponibles para la secretaria en este momento.'}</div>`}
+    </div>
+    <div class="modal-actions"><button class="btn-ghost" onclick="closeModal()">Cerrar</button></div>`);
+}
+function confirmAccion(id, accion){
+  const t = state.turnos.find(x => x.id === id);
+  const txt = accion === 'cansin'
+    ? 'El turno pasará a Cancelación sin cobro. Es un estado final y el horario quedará libre.'
+    : 'El turno pasará a Cancelación por clínica. Es un estado final y el horario quedará libre. Recordá avisarle al paciente.';
+  showModal(`<h3>${accion==='cansin'?'Cancelar sin cobro':'Cancelar por clínica'}</h3>
+    <div class="sub">${esc(pacName(pac(t.paciente)))} · ${fDay(parseYmd(t.fecha))}, ${fHora(t.hora)}</div>
+    <div class="alert warn">${txt}</div>
+    <div class="modal-actions"><button class="btn-ghost" onclick="openDetalle('${id}')">Volver</button><button class="btn-danger" onclick="doAccion('${id}','${accion}')">Confirmar cancelación</button></div>`);
+}
+function doAccion(id, accion){
+  const t = state.turnos.find(x => x.id === id);
+  const map = {pago:['ASIG','Pago registrado. El turno quedó en Reserva asignada.'], cansin:['CANSIN','Turno cancelado sin cobro.'], cancli:['CANCLI','Turno cancelado por la clínica.'], saldo:['SALD','Saldo registrado. El turno quedó como Turno saldado.']};
+  t.estado = map[accion][0];
+  closeModal(); render(); toast(map[accion][1]);
+}
+
+/* ================= Formulario de turno ================= */
+function openTurnoForm(editId, preset){
+  if (editId){
+    const t = state.turnos.find(x => x.id === editId);
+    draft = {id:editId, paciente:t.paciente, persona:t.persona, medico:t.medico, fecha:t.fecha, hora:t.hora};
+  } else if (!preset || !preset.keep){
+    const min = ymd(primeraReservable());
+    draft = Object.assign({id:null, paciente:'', persona:'', medico:state.medicos.find(m=>m.activo)?.id || '', fecha:min, hora:null}, preset || {});
+  }
+  renderTurnoForm();
+}
+function renderTurnoForm(){
+  const d = draft;
+  const min = primeraReservable();
+  const day = d.fecha ? parseYmd(d.fecha) : null;
+  const fechaOk = day && isHabil(day) && day >= min;
+  const ocupado = h => state.turnos.some(t => t.id !== d.id && esActivo(t) && t.medico === d.medico && t.fecha === d.fecha && t.hora === h);
+  if (d.hora != null && ocupado(d.hora)) d.hora = null;
+  const pacientes = state.pacientes.filter(p => p.activo).sort((a,b) => a.apellido.localeCompare(b.apellido));
+  const superp = d.paciente && d.hora != null && fechaOk && state.turnos.filter(t => t.id !== d.id && esActivo(t) && t.paciente === d.paciente && t.fecha === d.fecha && t.hora === d.hora);
+  let msgs = '';
+  if (d.fecha && !fechaOk){
+    msgs += `<div class="alert err">${day && !isHabil(day) ? 'La clínica no atiende sábados ni domingos.' : `No se puede reservar para esa fecha. El primer día reservable es el ${fDay(min)}.`}</div>`;
+  }
+  if (superp && superp.length){
+    msgs += `<div class="alert warn"><b>Aviso de superposición:</b> este paciente ya tiene ${superp.length===1?'un turno':'turnos'} en el mismo horario (${superp.map(t => esc(med(t.medico).nombre) + (t.persona ? ', se atiende ' + esc(t.persona) : '')).join('; ')}). Se puede guardar igual, por ejemplo si son turnos para distintos hijos.</div>`;
+  }
+  if (fechaOk){
+    const lim = addHabiles(day, -2); lim.setHours(16);
+    msgs += `<div class="alert ${ymd(lim)===ymd(state.now)?'warn':'ok'}">El turno queda en Reserva sin cobro. Debe pagarse hasta el <b>${fDay(lim)} a las 16:00</b>${ymd(lim)===ymd(state.now)?' (hoy). Avisale al paciente que debe pagar hoy':''}; si no, pasa a Cancelación con cobro.</div>`;
+  }
+  const canSave = d.paciente && d.medico && fechaOk && d.hora != null;
+  showModal(`
+    <h3>${d.id ? 'Editar turno' : 'Nuevo turno'}</h3>
+    <div class="sub">Solo se ofrecen los horarios libres del médico. Primer día reservable: ${fDay(min)}.</div>
+    <div class="grid2">
+      <div class="field" style="grid-column:1/-1"><label for="f-pac">Paciente</label>
+        <select id="f-pac" onchange="draft.paciente=this.value;renderTurnoForm()"><option value="">Elegí un paciente…</option>
+          ${pacientes.map(p => `<option value="${p.id}" ${p.id===d.paciente?'selected':''}>${esc(p.apellido)}, ${esc(p.nombre)} · ${esc(p.telefono)}</option>`).join('')}
+        </select>
+        <div class="hint">¿No está en la lista? <button class="link" onclick="openPacienteForm(null,true)">Cargar paciente nuevo</button></div></div>
+      <div class="field" style="grid-column:1/-1"><label for="f-persona">Persona que se atiende (opcional)</label>
+        <input id="f-persona" type="text" placeholder="Completar solo si no es el paciente, por ej. un hijo" value="${esc(d.persona)}" oninput="draft.persona=this.value"></div>
+      <div class="field"><label for="f-med">Médico</label>
+        <select id="f-med" onchange="draft.medico=this.value;renderTurnoForm()">
+          ${state.medicos.filter(m => m.activo).map(m => `<option value="${m.id}" ${m.id===d.medico?'selected':''}>${esc(m.nombre)} · ${esc(m.especialidad)}</option>`).join('')}
+        </select></div>
+      <div class="field"><label for="f-fecha">Fecha</label>
+        <input id="f-fecha" type="date" min="${ymd(min)}" value="${d.fecha||''}" onchange="draft.fecha=this.value;renderTurnoForm()"></div>
+      <div class="field" style="grid-column:1/-1"><label for="f-hora">Horario</label>
+        <select id="f-hora" onchange="draft.hora=this.value===''?null:Number(this.value);renderTurnoForm()" ${fechaOk?'':'disabled'}>
+          <option value="">${fechaOk ? 'Elegí un horario…' : 'Elegí primero una fecha válida'}</option>
+          ${HORAS.map(h => `<option value="${h}" ${ocupado(h)?'disabled':''} ${h===d.hora?'selected':''}>${fHora(h)}${ocupado(h)?' · ocupado':''}</option>`).join('')}
+        </select></div>
+    </div>
+    ${msgs}
+    <div class="modal-actions">
+      <button class="btn-ghost" onclick="${d.id ? `openDetalle('${d.id}')` : 'closeModal()'}">Cancelar</button>
+      <button class="btn-primary" onclick="saveTurno()" ${canSave?'':'disabled'}>${d.id ? 'Guardar cambios' : 'Reservar turno'}</button>
+    </div>`);
+}
+function saveTurno(){
+  const d = draft;
+  d.persona = (document.getElementById('f-persona')?.value || '').trim();
+  if (d.id){
+    const t = state.turnos.find(x => x.id === d.id);
+    Object.assign(t, {paciente:d.paciente, persona:d.persona, medico:d.medico, fecha:d.fecha, hora:d.hora});
+    toast('Turno actualizado. Los plazos se recalcularon según la nueva fecha.');
+  } else {
+    state.turnos.push({id:'t'+(++seq), paciente:d.paciente, persona:d.persona, medico:d.medico, fecha:d.fecha, hora:d.hora, estado:'SIN'});
+    const lim = addHabiles(parseYmd(d.fecha), -2);
+    toast(`Turno reservado en Reserva sin cobro. Debe pagarse hasta el ${fDay(lim)} a las 16:00.`);
+  }
+  ui.agendaDate = d.fecha; draft = null;
+  closeModal(); if (session.view !== 'agenda') session.view = 'agenda'; render();
+}
+
+/* ================= Vista: Cobros pendientes ================= */
+function viewCobros(){
+  const deudas = state.turnos.filter(t => t.estado === 'CANCON').sort((a,b) => inicio(a)-inicio(b));
+  const sin = state.turnos.filter(t => t.estado === 'SIN').sort((a,b) => fechaLimite(a)-fechaLimite(b));
+  const row = (t, extra) => { const p = pac(t.paciente); return `<td>${fDayCap(parseYmd(t.fecha))}<br><span class="muted">${fHora(t.hora)}</span></td><td>${esc(pacName(p))}${t.persona?`<br><span class="muted">Se atiende: ${esc(t.persona)}</span>`:''}</td><td>${esc(p.telefono)}</td><td>${esc(med(t.medico).nombre)}</td>${extra}`; };
+  const situ = t => {
+    const lim = fechaLimite(t);
+    if (state.now >= lim) return `<span class="tag e-cancon">Plazo vencido</span><br><span class="muted">Pasa a con cobro el ${fDay(diaSinCancelacion(t))}</span>`;
+    if (ymd(lim) === ymd(state.now)) return `<span class="tag e-sin">Vence hoy, 16:00</span>`;
+    return `<span class="tag gray">En plazo</span>`;
+  };
+  return `
+    <div class="topbar"><div><h2>Cobros pendientes</h2><div class="sub">Deudas a saldar y reservas que todavía no se pagaron</div></div></div>
+    <h3 class="section">Cancelaciones con cobro sin saldar</h3>
+    <p class="section-sub">El paciente debe abonar el turno completo. Al cobrarlo, registrá el saldo.</p>
+    <div class="tbl"><table>
+      <tr><th>Turno</th><th>Paciente</th><th>Teléfono</th><th>Médico</th><th></th></tr>
+      ${deudas.length ? deudas.map(t => `<tr>${row(t, `<td class="row-actions"><button onclick="doAccion('${t.id}','saldo')">Registrar saldo</button><button onclick="openDetalle('${t.id}')">Ver turno</button></td>`)}</tr>`).join('') : `<tr class="empty-row"><td colspan="5">No hay deudas pendientes.</td></tr>`}
+    </table></div>
+    <h3 class="section">Reservas sin cobro</h3>
+    <p class="section-sub">Deben pagarse hasta las 16:00 del 2° día hábil anterior al turno.</p>
+    <div class="tbl"><table>
+      <tr><th>Turno</th><th>Paciente</th><th>Teléfono</th><th>Médico</th><th>Fecha límite</th><th>Situación</th><th></th></tr>
+      ${sin.length ? sin.map(t => `<tr>${row(t, `<td>${fDay(fechaLimite(t))}, 16:00</td><td>${situ(t)}</td><td class="row-actions">${state.now < fechaLimite(t) ? `<button onclick="doAccion('${t.id}','pago')">Registrar pago</button>` : ''}<button onclick="openDetalle('${t.id}')">Ver turno</button></td>`)}</tr>`).join('') : `<tr class="empty-row"><td colspan="7">No hay reservas sin cobro.</td></tr>`}
+    </table></div>`;
+}
+
+/* ================= Vista: Pacientes ================= */
+function pendientesPaciente(id){ return state.turnos.filter(t => t.paciente === id && ['SIN','ASIG','CANCON'].includes(t.estado)); }
+function viewPacientes(){
+  const q = ui.pacQuery.trim().toLowerCase();
+  const list = state.pacientes.filter(p => !q || pacName(p).toLowerCase().includes(q) || p.telefono.includes(q) || p.dni.includes(q))
+    .sort((a,b) => (b.activo - a.activo) || a.apellido.localeCompare(b.apellido));
+  const activos = state.pacientes.filter(p => p.activo).length;
+  return `
+    <div class="topbar"><div><h2>Pacientes</h2><div class="sub">${activos} pacientes activos · identificados por teléfono</div></div>
+      <button class="btn-new" onclick="openPacienteForm()">+ Nuevo paciente</button></div>
+    <div class="toolbar"><input type="search" id="pac-q" placeholder="Buscar por nombre, teléfono o DNI" value="${esc(ui.pacQuery)}" oninput="ui.pacQuery=this.value;document.getElementById('pac-tbody').innerHTML=pacRows()" style="min-width:min(280px,100%)"></div>
+    <div class="tbl"><table>
+      <thead><tr><th>Paciente</th><th>DNI</th><th>Teléfono</th><th>Obra social</th><th>Mail</th><th>Estado</th><th></th></tr></thead>
+      <tbody id="pac-tbody">${pacRows(list)}</tbody>
+    </table></div>`;
+}
+function pacRows(list){
+  if (!list){
+    const q = ui.pacQuery.trim().toLowerCase();
+    list = state.pacientes.filter(p => !q || pacName(p).toLowerCase().includes(q) || p.telefono.includes(q) || p.dni.includes(q)).sort((a,b) => (b.activo - a.activo) || a.apellido.localeCompare(b.apellido));
+  }
+  if (!list.length) return `<tr class="empty-row"><td colspan="7">No hay pacientes que coincidan con la búsqueda.</td></tr>`;
+  return list.map(p => `<tr class="${p.activo?'':'inactive'}"><td>${esc(p.apellido)}, ${esc(p.nombre)}</td><td>${esc(p.dni)}</td><td>${esc(p.telefono)}</td><td>${esc(p.obraSocial)}</td><td>${p.mail?esc(p.mail):'<span class="muted">—</span>'}</td>
+    <td>${p.activo?'<span class="tag">Activo</span>':'<span class="tag gray">Dado de baja</span>'}</td>
+    <td class="row-actions">${p.activo?`<button onclick="openPacienteForm('${p.id}')">Editar</button>`:''}<button onclick="openHistorial('${p.id}')">Historial</button>${p.activo?`<button class="danger" onclick="bajaPaciente('${p.id}')">Dar de baja</button>`:''}</td></tr>`).join('');
+}
+function openPacienteForm(id, fromTurno){
+  const p = id ? pac(id) : {nombre:'',apellido:'',dni:'',telefono:'',obraSocial:'',mail:''};
+  showModal(`
+    <h3>${id?'Editar paciente':'Nuevo paciente'}</h3>
+    <div class="sub">El teléfono identifica al paciente y no puede repetirse. Si pertenece a un paciente dado de baja, se reactiva su registro.</div>
+    <div id="pf-msg"></div>
+    <div class="grid2">
+      <div class="field"><label for="pf-nombre">Nombre</label><input id="pf-nombre" value="${esc(p.nombre)}"></div>
+      <div class="field"><label for="pf-apellido">Apellido</label><input id="pf-apellido" value="${esc(p.apellido)}"></div>
+      <div class="field"><label for="pf-dni">DNI</label><input id="pf-dni" value="${esc(p.dni)}"></div>
+      <div class="field"><label for="pf-tel">Teléfono</label><input id="pf-tel" value="${esc(p.telefono)}" placeholder="ej: 3462-301876"></div>
+      <div class="field"><label for="pf-os">Obra social</label><input id="pf-os" value="${esc(p.obraSocial)}"></div>
+      <div class="field"><label for="pf-mail">Mail (opcional)</label><input id="pf-mail" type="email" value="${esc(p.mail)}"></div>
+    </div>
+    <div class="modal-actions"><button class="btn-ghost" onclick="${fromTurno?'renderTurnoForm()':'closeModal()'}">Cancelar</button><button class="btn-primary" onclick="savePaciente(${id?`'${id}'`:'null'},${!!fromTurno})">Guardar paciente</button></div>`);
+}
+function savePaciente(id, fromTurno){
+  const v = k => document.getElementById(k).value.trim();
+  const data = {nombre:v('pf-nombre'), apellido:v('pf-apellido'), dni:v('pf-dni'), telefono:v('pf-tel'), obraSocial:v('pf-os'), mail:v('pf-mail')};
+  const msg = document.getElementById('pf-msg');
+  const missing = ['nombre','apellido','dni','telefono','obraSocial'].filter(k => !data[k]);
+  if (missing.length){ msg.innerHTML = `<div class="alert err">Completá nombre, apellido, DNI, teléfono y obra social. El mail es el único dato opcional.</div>`; return; }
+  const norm = s => s.replace(/\D/g,'');
+  const same = state.pacientes.find(p => p.id !== id && norm(p.telefono) === norm(data.telefono));
+  let saved;
+  if (same && same.activo){ msg.innerHTML = `<div class="alert err">El teléfono ${esc(data.telefono)} ya pertenece a ${esc(pacName(same))}. Cada paciente debe tener un teléfono distinto.</div>`; return; }
+  if (same && !same.activo && !id){
+    Object.assign(same, data, {activo:true}); saved = same;
+    toast(`Se reactivó el registro anterior de ${pacName(same)} con los datos actualizados.`);
+  } else if (id){
+    if (same){ msg.innerHTML = `<div class="alert err">Ese teléfono pertenece a otro paciente.</div>`; return; }
+    saved = Object.assign(pac(id), data); toast('Paciente actualizado.');
+  } else {
+    saved = Object.assign({id:'p'+(++seq), activo:true}, data); state.pacientes.push(saved); toast('Paciente registrado.');
+  }
+  if (fromTurno && draft){ draft.paciente = saved.id; renderTurnoForm(); }
+  else { closeModal(); render(); }
+}
+function bajaPaciente(id){
+  const p = pac(id); const pend = pendientesPaciente(id);
+  if (pend.length){
+    showModal(`<h3>No se puede dar de baja</h3><div class="sub">${esc(pacName(p))}</div>
+      <div class="alert err">El paciente tiene turnos pendientes. Solo puede darse de baja cuando no tenga turnos en Reserva sin cobro, Reserva asignada ni Cancelación con cobro sin saldar.</div>
+      <div class="history-list">${pend.map(t => `<div style="display:flex;justify-content:space-between;gap:10px;align-items:center;font-size:13px"><span>${fDay(parseYmd(t.fecha))}, ${pad(t.hora)}:00 · ${esc(med(t.medico).nombre)}</span>${tag(t.estado)}</div>`).join('')}</div>
+      <div class="modal-actions"><button class="btn-ghost" onclick="closeModal()">Entendido</button></div>`);
+    return;
+  }
+  showModal(`<h3>Dar de baja paciente</h3><div class="sub">${esc(pacName(p))} · Tel. ${esc(p.telefono)}</div>
+    <div class="alert warn">Es una baja lógica: el paciente deja de aparecer para nuevas reservas, pero su historial se conserva. Si vuelve con el mismo teléfono, se reactiva.</div>
+    <div class="modal-actions"><button class="btn-ghost" onclick="closeModal()">Volver</button><button class="btn-danger" onclick="pac('${id}').activo=false;closeModal();render();toast('Paciente dado de baja.')">Dar de baja</button></div>`);
+}
+function openHistorial(id){
+  const p = pac(id);
+  const ts = state.turnos.filter(t => t.paciente === id).sort((a,b) => inicio(b)-inicio(a));
+  showModal(`<h3>Historial de ${esc(pacName(p))}</h3><div class="sub">Tel. ${esc(p.telefono)} · ${esc(p.obraSocial)}</div>
+    <div class="history-list">${ts.length ? ts.map(t => turnoCard(t).replace('<span class="p-name">'+esc(pacName(p))+'</span>', `<span class="p-name">${fDayCap(parseYmd(t.fecha))} · ${pad(t.hora)}:00 · ${esc(med(t.medico).nombre)}</span>`)).join('') : '<span class="muted">Sin turnos registrados.</span>'}</div>
+    <div class="modal-actions"><button class="btn-ghost" onclick="closeModal()">Cerrar</button></div>`);
+}
+
+/* ================= Vista: Médicos ================= */
+function viewMedicos(){
+  return `
+    <div class="topbar"><div><h2>Médicos</h2><div class="sub">Jornada común: lunes a viernes, 8 turnos de 1 hora (08:00 a 16:00)</div></div>
+      <button class="btn-new" onclick="openMedicoForm()">+ Nuevo médico</button></div>
+    <div class="tbl"><table>
+      <tr><th>Nombre</th><th>Especialidad</th><th>Teléfono</th><th>DNI</th><th>Usuario de acceso</th><th>Estado</th><th></th></tr>
+      ${state.medicos.map(m => `<tr class="${m.activo?'':'inactive'}"><td>${esc(m.nombre)}</td><td>${esc(m.especialidad)}</td><td>${esc(m.telefono)}</td><td>${esc(m.dni)}</td><td>${esc(m.usuario)}</td>
+        <td>${m.activo?'<span class="tag">Activo</span>':'<span class="tag gray">Dado de baja · cuenta desactivada</span>'}</td>
+        <td class="row-actions">${m.activo?`<button onclick="openMedicoForm('${m.id}')">Editar</button><button class="danger" onclick="bajaMedico('${m.id}')">Dar de baja</button>`:''}</td></tr>`).join('')}
+    </table></div>`;
+}
+function openMedicoForm(id){
+  const m = id ? med(id) : {nombre:'',especialidad:'',telefono:'',dni:'',usuario:''};
+  showModal(`<h3>${id?'Editar médico':'Nuevo médico'}</h3>
+    <div class="sub">La especialidad es un dato informativo: todos los médicos comparten el mismo horario.</div>
+    <div id="mf-msg"></div>
+    <div class="grid2">
+      <div class="field" style="grid-column:1/-1"><label for="mf-nombre">Nombre y apellido</label><input id="mf-nombre" value="${esc(m.nombre)}" placeholder="ej: Dra. Paula Medina"></div>
+      <div class="field"><label for="mf-esp">Especialidad</label><input id="mf-esp" value="${esc(m.especialidad)}"></div>
+      <div class="field"><label for="mf-tel">Teléfono</label><input id="mf-tel" value="${esc(m.telefono)}"></div>
+      <div class="field"><label for="mf-dni">DNI</label><input id="mf-dni" value="${esc(m.dni)}"></div>
+      <div class="field"><label for="mf-user">Usuario de acceso</label><input id="mf-user" value="${esc(m.usuario)}"></div>
+    </div>
+    <div class="modal-actions"><button class="btn-ghost" onclick="closeModal()">Cancelar</button><button class="btn-primary" onclick="saveMedico(${id?`'${id}'`:'null'})">Guardar médico</button></div>`);
+}
+function saveMedico(id){
+  const v = k => document.getElementById(k).value.trim();
+  const data = {nombre:v('mf-nombre'), especialidad:v('mf-esp'), telefono:v('mf-tel'), dni:v('mf-dni'), usuario:v('mf-user').toLowerCase()};
+  if (Object.values(data).some(x => !x)){ document.getElementById('mf-msg').innerHTML = '<div class="alert err">Completá todos los campos.</div>'; return; }
+  if (state.medicos.some(m => m.id !== id && m.usuario === data.usuario)){ document.getElementById('mf-msg').innerHTML = '<div class="alert err">Ese usuario ya está en uso.</div>'; return; }
+  if (id) Object.assign(med(id), data); else state.medicos.push(Object.assign({id:'m'+(++seq), activo:true}, data));
+  closeModal(); render(); toast(id ? 'Médico actualizado.' : 'Médico registrado. Ya puede ingresar con su usuario.');
+}
+function bajaMedico(id){
+  const m = med(id);
+  const afectados = state.turnos.filter(t => t.medico === id && esActivo(t) && state.now < inicio(t));
+  showModal(`<h3>Dar de baja médico</h3><div class="sub">${esc(m.nombre)} · ${esc(m.especialidad)}</div>
+    <div class="alert warn">Se desactivará su cuenta de acceso y ${afectados.length ? `<b>${afectados.length} turno${afectados.length>1?'s':''} pendiente${afectados.length>1?'s':''}</b> pasará${afectados.length>1?'n':''} a Cancelación por clínica. Recordá avisar a esos pacientes.` : 'no tiene turnos pendientes para cancelar.'}</div>
+    ${afectados.length ? `<div class="history-list" style="margin-bottom:6px">${afectados.map(t => `<div style="display:flex;justify-content:space-between;gap:10px;align-items:center;font-size:13px"><span>${fDay(parseYmd(t.fecha))}, ${pad(t.hora)}:00 · ${esc(pacName(pac(t.paciente)))}</span>${tag(t.estado)}</div>`).join('')}</div>` : ''}
+    <div class="modal-actions"><button class="btn-ghost" onclick="closeModal()">Volver</button><button class="btn-danger" onclick="confirmBajaMedico('${id}')">Dar de baja</button></div>`);
+}
+function confirmBajaMedico(id){
+  const n = state.turnos.filter(t => t.medico === id && esActivo(t) && state.now < inicio(t));
+  n.forEach(t => t.estado = 'CANCLI');
+  med(id).activo = false;
+  closeModal(); render(); toast(`Médico dado de baja. ${n.length} turno${n.length===1?'':'s'} pasaron a Cancelación por clínica.`);
+}
+
+/* ================= Vista: Mi agenda (médico) ================= */
+const PAGE = 6;
+function viewMiAgenda(){
+  const m = med(session.medicoId);
+  let ts = state.turnos.filter(t => t.medico === m.id);
+  if (ui.med.dia) ts = ts.filter(t => t.fecha === ui.med.dia);
+  if (ui.med.orden === 'alfa'){
+    ts.sort((a,b) => pacName(pac(a.paciente)).localeCompare(pacName(pac(b.paciente))) || inicio(a)-inicio(b));
+  } else {
+    const now = state.now;
+    const prox = ts.filter(t => fin(t) > now).sort((a,b) => inicio(a)-inicio(b));
+    const pas = ts.filter(t => fin(t) <= now).sort((a,b) => inicio(b)-inicio(a));
+    ts = prox.concat(pas);
+  }
+  const pages = Math.max(1, Math.ceil(ts.length / PAGE));
+  if (ui.med.page > pages) ui.med.page = pages;
+  const slice = ts.slice((ui.med.page-1)*PAGE, ui.med.page*PAGE);
+  const accion = t => {
+    if (t.estado !== 'ASIG') return '';
+    if (state.now >= inicio(t) && state.now < fin(t)) return `<button class="estado-btn" onclick="marcarPresente('${t.id}')">Marcar presente</button>`;
+    return `<span class="muted">Disponible de ${pad(t.hora)}:00 a ${pad(t.hora+1)}:00</span>`;
+  };
+  return `
+    <div class="topbar"><div><h2>Mi agenda</h2><div class="sub">${esc(m.nombre)} · ${esc(m.especialidad)}</div></div></div>
+    <div class="info-strip">Solo podés registrar <b>Paciente presente</b> durante la hora del turno. Si no lo registrás, al terminar la hora el turno pasa solo a <b>Paciente ausente</b>.</div>
+    <div class="toolbar">
+      <label class="muted" for="m-orden">Ordenar por</label>
+      <select id="m-orden" onchange="ui.med.orden=this.value;ui.med.page=1;render()">
+        <option value="cercania" ${ui.med.orden==='cercania'?'selected':''}>Turno más cercano</option>
+        <option value="alfa" ${ui.med.orden==='alfa'?'selected':''}>Paciente (A–Z)</option>
+      </select>
+      <label class="muted" for="m-dia">Día</label>
+      <input type="date" id="m-dia" value="${ui.med.dia}" onchange="ui.med.dia=this.value;ui.med.page=1;render()">
+      <button class="btn-ghost" onclick="ui.med.dia=ymd(state.now);ui.med.page=1;render()">Hoy</button>
+      <button class="btn-ghost" onclick="ui.med.dia='';ui.med.page=1;render()" ${ui.med.dia?'':'disabled'}>Ver todos los días</button>
+    </div>
+    <div class="tbl"><table>
+      <tr><th>Fecha</th><th>Horario</th><th>Paciente</th><th>Se atiende</th><th>Obra social</th><th>Estado</th><th></th></tr>
+      ${slice.length ? slice.map(t => { const p = pac(t.paciente); return `<tr><td>${fDayCap(parseYmd(t.fecha))}</td><td>${fHora(t.hora)}</td><td>${esc(pacName(p))}</td><td>${t.persona?esc(t.persona):'<span class="muted">—</span>'}</td><td>${esc(p.obraSocial)}</td><td>${tag(t.estado)}</td><td>${accion(t)}</td></tr>`; }).join('')
+        : `<tr class="empty-row"><td colspan="7">No hay turnos ${ui.med.dia ? 'para el ' + fDay(parseYmd(ui.med.dia)) : ''}.</td></tr>`}
+    </table></div>
+    <div class="pager"><span>${ts.length} turno${ts.length===1?'':'s'} · página ${ui.med.page} de ${pages}</span>
+      <div><button class="btn-ghost" onclick="ui.med.page--;render()" ${ui.med.page<=1?'disabled':''}>‹ Anterior</button><button class="btn-ghost" onclick="ui.med.page++;render()" ${ui.med.page>=pages?'disabled':''}>Siguiente ›</button></div></div>`;
+}
+function marcarPresente(id){
+  const t = state.turnos.find(x => x.id === id);
+  if (t.estado !== 'ASIG' || !(state.now >= inicio(t) && state.now < fin(t))) return;
+  t.estado = 'PRES'; render(); toast(`Registrado: ${pacName(pac(t.paciente))} está presente.`);
+}
+
+/* ================= Modal y avisos ================= */
+function showModal(html){ document.getElementById('modal').innerHTML = html; document.getElementById('overlay').hidden = false; }
+function closeModal(){ document.getElementById('overlay').hidden = true; }
+document.addEventListener('keydown', e => { if (e.key === 'Escape') closeModal(); });
+function toast(msg, kind){
+  const el = document.createElement('div'); el.className = 'toast' + (kind==='err'?' err':''); el.textContent = msg;
+  const box = document.getElementById('toasts'); box.appendChild(el);
+  setTimeout(() => el.remove(), 5200);
+}
+
+runAuto();
+</script>
+
+</body>
+</html>
